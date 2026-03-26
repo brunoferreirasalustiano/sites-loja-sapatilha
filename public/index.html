@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="De Pietri Sapatilhas - Conforto e elegância.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <title>De Pietri Sapatilhas</title>
+</head>
+<body>
+    <header>
+        <img src="/imagens-sapatilhas/logo.png" alt="logo">
+        <a href="checkout.html" style="text-decoration: none;">
+            <div class="cart-container">
+                <span>🛒</span>
+                <span id="cart-count">0</span>
+            </div>
+        </a>
+        <div class="header-textos">
+            <h1>DE PIETRI SAPATILHAS</h1>
+            <p>Sua loja de sapatilhas</p>
+        </div>
+    </header>
+
+    <main id="vitrine-produtos">
+    <div class="carousel-wrapper">
+        
+        <button class="arrow-btn" onclick="mudarPagina(-1)">❮</button>
+        
+        <section class="vitrine"></section>
+
+        <button class="arrow-btn" onclick="mudarPagina(1)">❯</button>
+        
+    </div>
+</main>
+
+    <footer style="background: #333; color: white; padding: 40px 20px; text-align: center;">
+    <div style="margin-bottom: 20px;">
+        <h3 style="color: #fdf0f5;">DE PIETRI SAPATILHAS</h3>
+        <p style="font-size: 0.9em; color: #ccc;">Conforto e elegância em cada passo.</p>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <p><strong>Pagamento Facilitado:</strong> 💳 Cartão e 💠 PIX</p>
+    </div>
+
+    <div style="border-top: 1px solid #555; padding-top: 20px; font-size: 0.8em; color: #999;">
+        <p>De Pietri Sapatilhas - &copy; 2026</p>
+        <p>Desenvolvido por <a href="https://www.linkedin.com/in/bfs-bruno" target="_blank" style="color: #d6247d; text-decoration: none; font-weight: bold;">BFS SITES & METADADOS</a></p>
+    
+        <br>
+        <a href="login.html"
+            style="display: inline-block; margin-top: 15px; color: #777; text-decoration: none; border: 1px solid #444; padding: 5px 15px; border-radius: 5px; transition: 0.3s;">
+            🔐 Área Restrita (Login)
+        </a>
+    </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

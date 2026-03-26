@@ -1,0 +1,191 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #fff5f8;
+    font-family: 'Montserrat', sans-serif;
+    color: #333;
+    overflow-x: hidden;
+}
+
+/* CABEÇALHO (HEADER) */
+header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: pink;
+    padding: 20px;
+    text-align: center;
+}
+
+header img {
+    width: 150px;
+    height: auto;
+    border-radius: 50%;
+    transition: transform 0.5s ease;
+}
+
+header img:hover { transform: scale(1.1); }
+
+.header-textos h1 {
+    color: #d6247d;
+    margin-top: 10px;
+}
+
+/* CARRINHO E WHATSAPP (FIXOS) */
+.cart-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #d6247d;
+    padding: 10px 15px;
+    border-radius: 50px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+#cart-count {
+    background-color: white;
+    color: black;
+    min-width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: bold;
+}
+
+.whatsapp-flutuante {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background-color: #25d366;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/*CARROSSEL (SETAS + VITRINE) */
+.carousel-wrapper {
+    display: flex;
+    align-items: center; /* Centraliza as setas na altura das fotos */
+    justify-content: space-between; /* Empurra as setas para as pontas */
+    gap: 20px;
+    max-width: 1300px; /* Largura máxima para caber 3 colunas confortáveis */
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.vitrine {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* FORÇA AS 3 COLUNAS */
+    gap: 20px;
+    flex: 1; /* Faz a vitrine ocupar todo o meio */
+}
+
+.arrow-btn {
+    background-color: #d6247d;
+    color: white;
+    border: none;
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    font-size: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(214, 36, 125, 0.3);
+    transition: 0.3s;
+    flex-shrink: 0;
+}
+
+.arrow-btn:hover {
+    background-color: #b01d66;
+    transform: scale(1.1);
+}
+
+/*CARDS DE PRODUTO */
+.produto {
+    background: white;
+    border-radius: 15px;
+    border: 1px solid #eee;
+    padding: 15px;
+    text-align: center;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.produto:hover { transform: translateY(-5px); }
+
+.produto img {
+    width: 100%;
+    height: 250px;
+    object-fit: contain;
+    margin-bottom: 15px;
+}
+
+/*CONTROLES DE QUANTIDADE */
+.controle-quantidade {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #fdf2f7;
+    padding: 8px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.controle-quantidade button {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: #d6247d;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/*RESPONSIVIDADE */
+@media (max-width: 950px) {
+    .vitrine { grid-template-columns: repeat(2, 1fr); } /* 2 colunas em tablets */
+}
+
+@media (max-width: 650px) {
+    .vitrine { grid-template-columns: 1fr; } /* 1 coluna em celulares */
+    .carousel-wrapper { gap: 10px; }
+    .arrow-btn { width: 45px; height: 45px; font-size: 20px; }
+    .whatsapp-flutuante span { display: none; }
+}
+
+/*FOOTER */
+footer {
+    text-align: center;
+    background-color: pink;
+    padding: 30px;
+    margin-top: 50px;
+    font-size: 14px;
+}

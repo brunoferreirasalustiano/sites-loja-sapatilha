@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - De Pietri</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background-color: #fdfafb; padding: 20px; color: #333; }
+        .container { max-width: 850px; margin: auto; }
+        h1 { color: #d6247d; text-align: center; margin-bottom: 30px; }
+
+        /* Estilo do Card */
+        .card { 
+            background: #fdf2f7; 
+            padding: 20px; border-radius: 15px; 
+            display: flex; align-items: center; gap: 20px; margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(214, 36, 125, 0.1);
+            border: 1px solid #f8d7da;
+        }
+
+        .card img { width: 110px; height: 110px; object-fit: cover; border-radius: 12px; border: 3px solid white; }
+
+        /* Estilo dos Inputs */
+        .inputs { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .inputs label { font-size: 11px; color: #d6247d; font-weight: bold; margin-bottom: -5px; margin-top: 5px;}
+        
+        input { 
+            padding: 10px; border: 2px solid #f8d7da; border-radius: 10px; 
+            font-family: 'Montserrat', sans-serif; outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: #d6247d; background: white; }
+
+           .btn-salvar { 
+            background: linear-gradient(135deg, #d6247d 0%, #b01d66 100%);
+            color: white; 
+            border: none; 
+            padding: 14px 30px; 
+            border-radius: 30px;
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(214, 36, 125, 0.3);
+            transition: all 0.3s ease;
+            min-width: 160px;
+        }
+        .btn-salvar:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(214, 36, 125, 0.4);
+        }
+        .btn-salvar:active { transform: translateY(0); }
+        .btn-salvar:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+        
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="margin: 0;">Painel De Pietri</h1>
+        <div style="display: flex; gap: 10px;">
+            <a href="index.html" style="text-decoration: none; background: #6c757d; color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 13px;">Ver Loja</a>
+            
+            <button onclick="sair()" style="background: #d6247d; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 13px;">Sair</button>
+        </div>
+    </div>
+    <div id="lista-admin"></div>
+</div>
+
+<script>
+    // 1. TRAVA DE SEGURANÇA 
+    // Verifica se o valor "logadoDePietri" existe no navegador
+    if (localStorage.getItem("logadoDePietri") !== "true") {
+        alert("Acesso negado! Por favor, faça login.");
+        window.location.href = "login.html"; // Manda de volta para o login
+    }
+
+    // 2. FUNÇÃO PARA SAIR (LOGOUT)
+    function sair() {
+        localStorage.removeItem("logadoDePietri");
+        window.location.href = "login.html";
+    }
+
+    // 3. FUNÇÕES DO PAINEL 
+    async function carregarPainel() {
+        const res = await fetch('/api/produtos?t=' + new Date().getTime());
+        const produtos = await res.json();
+        const lista = document.getElementById('lista-admin');
+        lista.innerHTML = "";
+
+        produtos.forEach(p => {
+            lista.innerHTML += `
+                <div class="card">
+                    <img src="${p.imagem_url}?t=${new Date().getTime()}" id="img-${p.id}">
+                    <div class="inputs">
+                        <label>NOME DA SAPATILHA</label>
+                        <input type="text" id="nome-${p.id}" value="${p.nome}">
+                        
+                        <label>PREÇO (R$)</label>
+                        <input type="number" step="0.01" id="preco-${p.id}" value="${p.preco}">
+
+                        <label>TAMANHOS DISPONÍVEIS (Separe por vírgula)</label>
+                        <input type="text" id="tamanhos-${p.id}" value="${p.tamanhos}" placeholder="Ex: 34,35,36,37">
+                        
+                        <label>TROCAR FOTO</label>
+                        <input type="file" id="foto-${p.id}" accept="image/*">
+                    </div>
+                    <button class="btn-salvar" id="btn-${p.id}" onclick="salvar(${p.id})">Salvar Alterações</button>
+                </div>
+            `;
+        });
+    }
+
+    async function salvar(id) {
+        const btn = document.getElementById(`btn-${id}`);
+        const originalText = btn.innerText;
+        
+        btn.innerText = "Salvando...";
+        btn.disabled = true;
+
+        const nome = document.getElementById(`nome-${id}`).value;
+        const preco = document.getElementById(`preco-${id}`).value;
+        const tamanhos = document.getElementById(`tamanhos-${id}`).value;
+        const foto = document.getElementById(`foto-${id}`).files[0];
+
+        const fd = new FormData();
+        fd.append('nome', nome);
+        fd.append('preco', preco);
+        fd.append('tamanhos', tamanhos);
+        if(foto) fd.append('foto', foto);
+
+        try {
+            const res = await fetch(`/api/atualizar-produto/${id}`, {
+                method: 'POST',
+                body: fd
+            });
+
+            if(res.ok) {
+                alert("✅ Atualizado com Sucesso!");
+                document.getElementById(`foto-${id}`).value = "";
+                await carregarPainel(); 
+            }
+        } catch (e) {
+            alert("Erro ao conectar ao servidor.");
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+    
+
+    
+    carregarPainel();
+</script>
+
+
+</body>
+</html>

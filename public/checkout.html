@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Pedido - De Pietri</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #fff5f8; font-family: 'Montserrat', sans-serif; }
+        
+        .checkout-container { 
+            max-width: 500px; 
+            margin: 20px auto; 
+            padding: 15px; 
+        }
+
+        .btn-voltar-topo {
+            display: inline-block;
+            margin-bottom: 15px;
+            text-decoration: none;
+            color: #d6247d;
+            font-weight: bold;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        .btn-voltar-topo:hover { transform: translateX(-5px); }
+
+        .resumo-box { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(214, 36, 125, 0.1); 
+            border: 1px solid #f8d7da;
+        }
+
+        .lista-itens {
+            margin-bottom: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .item-checkout {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #fdf2f7;
+            font-size: 13px;
+        }
+
+        .total-container {
+            background: #fdf2f7;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .total-container span {
+            color: #d6247d;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .formulario-checkout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .formulario-checkout label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #d6247d;
+            text-transform: uppercase;
+            margin-bottom: -5px;
+        }
+
+        .formulario-checkout input {
+            padding: 12px;
+            border: 1px solid #f8d7da;
+            border-radius: 10px;
+            outline: none;
+            font-family: 'Montserrat';
+            background: #fff;
+        }
+
+        /* Estilo para campo que preenche sozinho */
+        .formulario-checkout input[readonly] {
+            background-color: #f9f9f9;
+            color: #777;
+            cursor: not-allowed;
+            border-style: dashed;
+        }
+
+        .btn-whatsapp-final {
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-whatsapp-final:hover { background: #1eb954; }
+    </style>
+</head>
+<body>
+
+    <main class="checkout-container">
+        <a href="index.html" class="btn-voltar-topo">← Voltar para a Loja</a>
+
+        <div class="resumo-box">
+            <h2 style="color:#d6247d; text-align:center; margin-bottom:5px;">Finalizar Pedido</h2>
+            <p style="text-align:center; font-size: 12px; color: #888; margin-bottom: 20px;">Confira seus itens e informe a entrega</p>
+            
+            <div id="lista-checkout" class="lista-itens"></div>
+
+            <div class="total-container">
+                <span id="total-geral">R$ 0,00</span>
+            </div>
+
+            <div class="formulario-checkout">
+                <label>Nome Completo</label>
+                <input type="text" id="nome-cliente" placeholder="Como quer ser chamado?">
+                
+                <label>CEP</label>
+                <input type="text" id="cep-cliente" placeholder="00000-000" onblur="buscarCEP()">
+                
+                <label>Endereço</label>
+                <input type="text" id="end-cliente" placeholder="Preenchido via CEP" readonly>
+                
+                <label>Número e Complemento</label>
+                <input type="text" id="numero-casa" placeholder="Ex: 123, Bloco B, Apto 10">
+            </div>
+
+            <button onclick="enviarZap()" class="btn-whatsapp-final">
+                🚀 Enviar Pedido via WhatsApp
+            </button>
+        </div>
+    </main>
+
+    <script>
+        async function render() {
+            const resBD = await fetch('/api/produtos');
+            const produtos = await resBD.json();
+            const info = {};
+            produtos.forEach(p => info[p.id] = p);
+
+            let sacola = JSON.parse(localStorage.getItem("sacolaDePietri")) || {};
+            let container = document.getElementById('lista-checkout');
+            let total = 0;
+            container.innerHTML = "";
+
+            let itensCount = 0;
+            for (let chave in sacola) {
+                let qtd = sacola[chave];
+                if (qtd <= 0) continue;
+                itensCount++;
+                let [id, tam] = chave.split("-");
+                let p = info[id];
+                let sub = qtd * p.preco;
+                total += sub;
+
+                container.innerHTML += `
+                    <div class="item-checkout">
+                        <span><strong>${p.nome}</strong> (Tam: ${tam})<br>${qtd}x R$ ${p.preco.toFixed(2)}</span>
+                        <span style="font-weight:bold">R$ ${sub.toFixed(2)}</span>
+                    </div>`;
+            }
+
+            if(itensCount === 0) {
+                container.innerHTML = "<p style='text-align:center; padding: 20px;'>Seu carrinho está vazio!</p>";
+            }
+
+            document.getElementById('total-geral').innerText = "R$ " + total.toFixed(2).replace('.', ',');
+        }
+
+        function buscarCEP() {
+            let cep = document.getElementById('cep-cliente').value.replace(/\D/g, '');
+            if (cep.length === 8) {
+                fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                .then(r => r.json()).then(d => {
+                    if(!d.erro) {
+                        document.getElementById('end-cliente').value = `${d.logradouro}, ${d.bairro} - ${d.localidade}/${d.uf}`;
+                    } else {
+                        alert("CEP não encontrado!");
+                    }
+                });
+            }
+        }
+
+        async function enviarZap() {
+    const resBD = await fetch('/api/produtos');
+    const produtos = await resBD.json();
+    const info = {};
+    produtos.forEach(p => info[p.id] = p);
+
+    let sacola = JSON.parse(localStorage.getItem("sacolaDePietri")) || {};
+    let nome = document.getElementById('nome-cliente').value;
+    let end = document.getElementById('end-cliente').value;
+    let num = document.getElementById('numero-casa').value;
+    
+    if(!nome || !end || !num) return alert("Por favor, preencha todos os campos!");
+
+    // Montando a mensagem SEM asteriscos e SEM emojis
+    let msg = `NOVO PEDIDO - DE PIETRI\n\n`;
+    msg += `Cliente: ${nome}\n`;
+    msg += `Entrega: ${end}, ${num}\n`;
+    msg += `---------------------------\n\n`;
+    
+    let total = 0;
+    let temItens = false;
+
+    for (let chave in sacola) {
+        if (sacola[chave] > 0) {
+            temItens = true;
+            let [id, tam] = chave.split("-");
+            let p = info[id];
+            msg += `Produto: ${p.nome}\n`;
+            msg += `Tamanho: ${tam} | Qtd: ${sacola[chave]}\n`;
+            msg += `Subtotal: R$ ${(sacola[chave]*p.preco).toFixed(2).replace('.', ',')}\n\n`;
+            total += sacola[chave] * p.preco;
+        }
+    }
+
+    if(!temItens) return alert("Seu carrinho está vazio!");
+
+    msg += `---------------------------\n`;
+    msg += `TOTAL DO PEDIDO: R$ ${total.toFixed(2).replace('.', ',')}`;
+    
+    // Abre o WhatsApp com a mensagem limpa
+    window.open(`https://wa.me/5519971374982?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+        render();
+    </script>
+</body>
+</html>
