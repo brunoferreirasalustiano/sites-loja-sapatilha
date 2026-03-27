@@ -1,6 +1,6 @@
 # 👠 De Pietri - Loja de Sapatilhas
 
-> **🌐 Acesse o site ao vivo:** [CLIQUE AQUI PARA VER A LOJA]([https://[COLE_O_LINK_AQUI_DO_RENDER]](https://loja-de-sapatilha.onrender.com/index.html))
+> **🌐 Acesse o site ao vivo:** CLIQUE AQUI PARA VER A LOJA (https://loja-de-sapatilha.onrender.com/index.html
 
 [Português](#português) | [English](#english)
 
