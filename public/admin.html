@@ -52,6 +52,52 @@
         }
         .btn-salvar:active { transform: translateY(0); }
         .btn-salvar:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+
+        /* --- AJUSTES PARA O PAINEL ADMIN NO CELULAR --- */
+@media (max-width: 650px) {
+    body { padding: 10px; }
+
+    .container { width: 100%; }
+
+    /* Faz o card virar vertical (imagem em cima, inputs embaixo) */
+    .card {
+        flex-direction: column; 
+        align-items: center;
+        text-align: center;
+        padding: 15px;
+        gap: 15px;
+    }
+
+    /* Aumenta a imagem no mobile para conferir melhor */
+    .card img {
+        width: 150px;
+        height: 150px;
+    }
+
+    /* Faz os inputs ocuparem a largura toda */
+    .inputs {
+        width: 100%;
+    }
+
+    input {
+        width: 100%;
+        height: 45px; /* Facilita o toque */
+        font-size: 14px;
+    }
+
+    /* Botão de salvar grande para o polegar */
+    .btn-salvar {
+        width: 100%;
+        padding: 18px;
+        font-size: 15px;
+    }
+
+    /* Ajuste no cabeçalho (título e botões) */
+    .container > div:first-child {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
         
     </style>
 </head>

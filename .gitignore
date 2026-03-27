@@ -2,3 +2,4 @@ node_modules
 banco.db
 .DS_Store
 uploads/
+package-lock.json

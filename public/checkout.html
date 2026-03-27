@@ -123,10 +123,14 @@
             <h2 style="color:#d6247d; text-align:center; margin-bottom:5px;">Finalizar Pedido</h2>
             <p style="text-align:center; font-size: 12px; color: #888; margin-bottom: 20px;">Confira seus itens e informe a entrega</p>
             
+            
             <div id="lista-checkout" class="lista-itens"></div>
+            <button onclick="limparSacola()" class="btn-limpar-tudo">Limpar Sacola</button>
+
 
             <div class="total-container">
                 <span id="total-geral">R$ 0,00</span>
+                
             </div>
 
             <div class="formulario-checkout">
@@ -150,41 +154,44 @@
     </main>
 
     <script>
-        async function render() {
-            const resBD = await fetch('/api/produtos');
-            const produtos = await resBD.json();
-            const info = {};
-            produtos.forEach(p => info[p.id] = p);
+       async function render() {
+        const resBD = await fetch('/api/produtos');
+        const produtos = await resBD.json();
+        const info = {};
+        produtos.forEach(p => info[p.id] = p);
 
-            let sacola = JSON.parse(localStorage.getItem("sacolaDePietri")) || {};
-            let container = document.getElementById('lista-checkout');
-            let total = 0;
-            container.innerHTML = "";
+        let sacola = JSON.parse(localStorage.getItem("sacolaDePietri")) || {};
+        let container = document.getElementById('lista-checkout');
+        let total = 0;
+        container.innerHTML = "";
 
-            let itensCount = 0;
-            for (let chave in sacola) {
-                let qtd = sacola[chave];
-                if (qtd <= 0) continue;
-                itensCount++;
-                let [id, tam] = chave.split("-");
-                let p = info[id];
-                let sub = qtd * p.preco;
-                total += sub;
+        let itensCount = 0;
+        for (let chave in sacola) {
+            let qtd = sacola[chave];
+            if (qtd <= 0) continue;
+            itensCount++;
+            let [id, tam] = chave.split("-");
+            let p = info[id];
+            let sub = qtd * p.preco;
+            total += sub;
 
-                container.innerHTML += `
-                    <div class="item-checkout">
-                        <span><strong>${p.nome}</strong> (Tam: ${tam})<br>${qtd}x R$ ${p.preco.toFixed(2)}</span>
-                        <span style="font-weight:bold">R$ ${sub.toFixed(2)}</span>
-                    </div>`;
-            }
-
-            if(itensCount === 0) {
-                container.innerHTML = "<p style='text-align:center; padding: 20px;'>Seu carrinho está vazio!</p>";
-            }
-
-            document.getElementById('total-geral').innerText = "R$ " + total.toFixed(2).replace('.', ',');
+            // AQUI ESTÁ O BOTÃO DE EXCLUIR (X) INSERIDO NA LISTA
+            container.innerHTML += `
+                <div class="item-checkout">
+                    <span><strong>${p.nome}</strong> (Tam: ${tam})<br>${qtd}x R$ ${p.preco.toFixed(2)}</span>
+                    <span style="font-weight:bold; display: flex; align-items: center; gap: 10px;">
+                        R$ ${sub.toFixed(2)}
+                        <button onclick="excluirItemTotal('${chave}')" style="background:none; border:none; cursor:pointer; font-size:16px;">❌</button>
+                    </span>
+                </div>`;
         }
 
+        if(itensCount === 0) {
+            container.innerHTML = "<p style='text-align:center; padding: 20px;'>Seu carrinho está vazio!</p>";
+        }
+
+        document.getElementById('total-geral').innerText = "R$ " + total.toFixed(2).replace('.', ',');
+    }
         function buscarCEP() {
             let cep = document.getElementById('cep-cliente').value.replace(/\D/g, '');
             if (cep.length === 8) {
@@ -243,6 +250,79 @@
 }
 
         render();
+        function excluirItemTotal(chave) {
+        let sacola = JSON.parse(localStorage.getItem("sacolaDePietri")) || {};
+        if (confirm("Remover este item do pedido?")) {
+            delete sacola[chave];
+            localStorage.setItem("sacolaDePietri", JSON.stringify(sacola));
+            render(); // Atualiza a tela na hora
+        }
+    }
+
+    function limparSacola() {
+        if (confirm("Deseja limpar toda a sua sacola?")) {
+            localStorage.setItem("sacolaDePietri", JSON.stringify({}));
+            render(); // Atualiza a tela na hora
+            alert("Sacola vazia!");
+        }
+    }
+
+    function buscarCEP() {
+        let cep = document.getElementById('cep-cliente').value.replace(/\D/g, '');
+        if (cep.length === 8) {
+            fetch(`https://viacep.com.br/ws/${cep}/json/`)
+            .then(r => r.json()).then(d => {
+                if(!d.erro) {
+                    document.getElementById('end-cliente').value = `${d.logradouro}, ${d.bairro} - ${d.localidade}/${d.uf}`;
+                } else {
+                    alert("CEP não encontrado!");
+                }
+            });
+        }
+    }
+
+    async function enviarZap() {
+        const resBD = await fetch('/api/produtos');
+        const produtos = await resBD.json();
+        const info = {};
+        produtos.forEach(p => info[p.id] = p);
+
+        let sacola = JSON.parse(localStorage.getItem("sacolaDePietri")) || {};
+        let nome = document.getElementById('nome-cliente').value;
+        let end = document.getElementById('end-cliente').value;
+        let num = document.getElementById('numero-casa').value;
+        
+        if(!nome || !end || !num) return alert("Por favor, preencha todos os campos!");
+
+        let msg = `NOVO PEDIDO - DE PIETRI\n\n`;
+        msg += `Cliente: ${nome}\n`;
+        msg += `Entrega: ${end}, ${num}\n`;
+        msg += `---------------------------\n\n`;
+        
+        let total = 0;
+        let temItens = false;
+
+        for (let chave in sacola) {
+            if (sacola[chave] > 0) {
+                temItens = true;
+                let [id, tam] = chave.split("-");
+                let p = info[id];
+                msg += `Produto: ${p.nome}\n`;
+                msg += `Tamanho: ${tam} | Qtd: ${sacola[chave]}\n`;
+                msg += `Subtotal: R$ ${(sacola[chave]*p.preco).toFixed(2).replace('.', ',')}\n\n`;
+                total += sacola[chave] * p.preco;
+            }
+        }
+
+        if(!temItens) return alert("Seu carrinho está vazio!");
+
+        msg += `---------------------------\n`;
+        msg += `TOTAL DO PEDIDO: R$ ${total.toFixed(2).replace('.', ',')}`;
+        
+        window.open(`https://wa.me/5519971374982?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    render();
     </script>
 </body>
 </html>

@@ -1,8 +1,7 @@
 let sacola = JSON.parse(localStorage.getItem("sacolaDePietri")) || {};
 let produtosGerais = [];
 let paginaAtual = 0;
-const itensPorPagina = 9; // Trava 3 colunas x 3 linhas
-
+const itensPorPagina = 9; 
 
 async function carregarProdutos() {
     try {
@@ -14,14 +13,12 @@ async function carregarProdutos() {
     }
 }
 
-// Renderizar a Vitrine 
 function renderizarVitrine() {
     const vitrine = document.querySelector('.vitrine');
     if (!vitrine) return;
 
     vitrine.innerHTML = ''; 
 
-    // Calcula baseando-se na página
     const inicio = paginaAtual * itensPorPagina;
     const fim = inicio + itensPorPagina;
     const produtosExibidos = produtosGerais.slice(inicio, fim);
@@ -42,6 +39,8 @@ function renderizarVitrine() {
                     <button onclick="removerDoCarrinho(${p.id})">-</button>
                     <span id="qtd-produto-${p.id}" class="qtd-item">0</span>
                     <button onclick="adicionarAoCarrinho(${p.id})">+</button>
+                    
+
                 </div>
             </article>
         `;
@@ -50,18 +49,17 @@ function renderizarVitrine() {
     atualizarTudo();
 }
 
-// Funções de Navegação (Setas)
+
 function mudarPagina(direcao) {
     const totalPaginas = Math.ceil(produtosGerais.length / itensPorPagina);
     paginaAtual += direcao;
-
     if (paginaAtual >= totalPaginas) paginaAtual = 0;
     if (paginaAtual < 0) paginaAtual = totalPaginas - 1;
-
     renderizarVitrine();
 }
 
-// Funções do Carrinho
+// --- FUNÇÕES DA SACOLA ---
+
 function adicionarAoCarrinho(id) {
     let selectTamanho = document.getElementById("tamanho-" + id);
     if (!selectTamanho) return;
@@ -86,6 +84,25 @@ function removerDoCarrinho(idOuChave) {
     }
 }
 
+// ITEM 2: Função para excluir o item INTEIRO (lixeira)
+function excluirItemTotal(chave) {
+    if (confirm("Remover este item da sacola?")) {
+        delete sacola[chave];
+        salvarEAtualizar();
+        // Se existir a função de listar o checkout, ela é chamada aqui
+        if (typeof exibirCheckout === 'function') exibirCheckout(); 
+    }
+}
+
+// ITEM 2: Função para limpar a sacola toda
+function limparSacola() {
+    if (confirm("Deseja limpar toda a sua sacola?")) {
+        sacola = {};
+        salvarEAtualizar();
+        if (typeof exibirCheckout === 'function') exibirCheckout();
+    }
+}
+
 function salvarEAtualizar() {
     localStorage.setItem("sacolaDePietri", JSON.stringify(sacola));
     window.dispatchEvent(new Event('storage')); 
@@ -107,12 +124,26 @@ function atualizarTudo() {
     if (contador) contador.innerText = totalGeral;
 }
 
-// Eventos de Inicialização e Automáticos
-document.addEventListener("DOMContentLoaded", carregarProdutos);
+// --- EVENTOS ---
 
+document.addEventListener("DOMContentLoaded", carregarProdutos);
 window.addEventListener('focus', carregarProdutos);
 
-// Timer para trocar de página a cada 1 minuto (60000ms)
 setInterval(() => {
     mudarPagina(1);
 }, 120000);
+
+// ITEM 1: Zoom no clique
+document.addEventListener('click', function(e) {
+    if (e.target.tagName === 'IMG' && e.target.closest('.produto')) {
+        const img = e.target;
+        if (img.classList.contains('img-zoom-clicada')) {
+            img.classList.remove('img-zoom-clicada');
+            img.style.cursor = 'zoom-in';
+        } else {
+            document.querySelectorAll('.img-zoom-clicada').forEach(el => el.classList.remove('img-zoom-clicada'));
+            img.classList.add('img-zoom-clicada');
+            img.style.cursor = 'zoom-out';
+        }
+    }
+});
