@@ -87,13 +87,40 @@ app.post('/api/atualizar-produto/:id', upload.single('foto'), async (req, res) =
     }
 });
 
-// 6. ROTA DE LOGIN
-app.post('/api/login', (req, res) => {
+// ROTA DE LOGIN (Agora consulta o Supabase)
+app.post('/api/login', async (req, res) => {
     const { usuario, senha } = req.body;
-    if (usuario === 'admin' && senha === '1234') {
+    try {
+        const { data, error } = await supabase
+            .from('usuarios')
+            .select('*')
+            .eq('usuario', usuario)
+            .eq('senha', senha)
+            .single();
+
+        if (data) {
+            res.json({ success: true });
+        } else {
+            res.status(401).json({ success: false, message: "Usuário ou senha incorretos" });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ROTA PARA ALTERAR SENHA (ADMIN)
+app.post('/api/alterar-senha', async (req, res) => {
+    const { usuario, novaSenha } = req.body;
+    try {
+        const { error } = await supabase
+            .from('usuarios')
+            .update({ senha: novaSenha })
+            .eq('usuario', usuario);
+
+        if (error) throw error;
         res.json({ success: true });
-    } else {
-        res.status(401).json({ success: false, message: "Acesso negado" });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

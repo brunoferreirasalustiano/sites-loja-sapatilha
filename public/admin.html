@@ -108,15 +108,27 @@
         <h1 style="margin: 0;">Painel De Pietri</h1>
         <div style="display: flex; gap: 10px;">
             <a href="index.html" style="text-decoration: none; background: #6c757d; color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 13px;">Ver Loja</a>
-            
             <button onclick="sair()" style="background: #d6247d; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 13px;">Sair</button>
         </div>
     </div>
+
+    <div style="background: #fdf2f8; padding: 20px; border-radius: 15px; margin-bottom: 30px; border: 1px solid #f9a8d4;">
+        <h3 style="color: #d6247d; margin-top: 0;">Segurança do Painel</h3>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="password" id="nova-senha" placeholder="Digite a nova senha aqui" 
+                   style="padding: 10px; border-radius: 8px; border: 1px solid #ddd; flex-grow: 1;">
+            <button onclick="mudarSenha()" 
+                    style="background: #333; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                Atualizar Senha
+            </button>
+        </div>
+    </div>
+
     <div id="lista-admin"></div>
 </div>
 
 <script>
-    // --- 1. TRAVA DE SEGURANÇA E LOGOUT ---
+// 1. TRAVA DE SEGURANÇA
 if (localStorage.getItem("logadoDePietri") !== "true") {
     alert("Acesso negado! Por favor, faça login.");
     window.location.href = "login.html";
@@ -127,16 +139,14 @@ function sair() {
     window.location.href = "login.html";
 }
 
-// --- 2. FUNÇÃO PARA CARREGAR O PAINEL ---
+// 2. FUNÇÃO PARA CARREGAR PRODUTOS
 async function carregarPainel() {
     const lista = document.getElementById('lista-admin');
     if (!lista) return;
 
     try {
-        // Buscamos os produtos do seu novo Back-end (que lê do Supabase)
         const res = await fetch('/api/produtos?t=' + new Date().getTime());
         const produtos = await res.json();
-        
         lista.innerHTML = "";
 
         produtos.forEach(p => {
@@ -146,69 +156,66 @@ async function carregarPainel() {
                     <div class="inputs">
                         <label>NOME DA SAPATILHA</label>
                         <input type="text" id="nome-${p.id}" value="${p.nome}">
-                        
                         <label>PREÇO (R$)</label>
                         <input type="number" step="0.01" id="preco-${p.id}" value="${p.preco}">
-
                         <label>TAMANHOS DISPONÍVEIS</label>
                         <input type="text" id="tamanhos-${p.id}" value="${p.tamanhos}">
-                        
-                        <label>TROCAR FOTO (Supabase Storage)</label>
+                        <label>TROCAR FOTO</label>
                         <input type="file" id="foto-${p.id}" accept="image/*">
                     </div>
-                    <button class="btn-salvar" id="btn-${p.id}" onclick="salvarAlteracoes(${p.id})">
-                        Salvar no Supabase
-                    </button>
+                    <button class="btn-salvar" id="btn-${p.id}" onclick="salvarAlteracoes(${id_p = p.id})">Salvar Alterações</button>
                 </div>
             `;
         });
-    } catch (e) {
-        console.error("Erro ao carregar produtos:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
-// --- 3. FUNÇÃO PARA SALVAR (MODO PROFISSIONAL) ---
+// 3. FUNÇÃO PARA SALVAR PRODUTO
 async function salvarAlteracoes(id) {
     const btn = document.getElementById(`btn-${id}`);
     const originalText = btn.innerText;
-    
-    btn.innerText = "Enviando...";
+    btn.innerText = "Salvando...";
     btn.disabled = true;
 
-    const formData = new FormData();
-    formData.append('nome', document.getElementById(`nome-${id}`).value);
-    formData.append('preco', document.getElementById(`preco-${id}`).value);
-    formData.append('tamanhos', document.getElementById(`tamanhos-${id}`).value);
-    
-    const fotoFile = document.getElementById(`foto-${id}`).files[0];
-    if (fotoFile) {
-        formData.append('foto', fotoFile);
-    }
+    const fd = new FormData();
+    fd.append('nome', document.getElementById(`nome-${id}`).value);
+    fd.append('preco', document.getElementById(`preco-${id}`).value);
+    fd.append('tamanhos', document.getElementById(`tamanhos-${id}`).value);
+    const foto = document.getElementById(`foto-${id}`).files[0];
+    if(foto) fd.append('foto', foto);
 
     try {
-        const res = await fetch(`/api/atualizar-produto/${id}`, {
-            method: 'POST',
-            body: formData
-        });
-        
+        const res = await fetch(`/api/atualizar-produto/${id}`, { method: 'POST', body: fd });
         const d = await res.json();
-        
-        if (d.success) {
-            alert("✅ Sucesso! Dados e Foto salvos no Supabase.");
-            // Pequeno delay para o Supabase processar a imagem antes de recarregar
-            setTimeout(() => location.reload(), 500);
-        } else {
-            alert("❌ Erro: " + d.error);
+        if(d.success) {
+            alert("✅ Atualizado com Sucesso!");
+            location.reload();
         }
-    } catch (e) {
-        alert("Erro de conexão com o servidor.");
-    } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
+    } catch (e) { alert("Erro ao salvar."); }
+    finally { btn.innerText = originalText; btn.disabled = false; }
+}
+
+// 4. FUNÇÃO PARA MUDAR SENHA (A que faltava!)
+async function mudarSenha() {
+    const novaSenha = document.getElementById('nova-senha').value;
+    if(!novaSenha) return alert("Digite a nova senha!");
+
+    if(confirm("Tem certeza que deseja mudar a senha de acesso?")) {
+        try {
+            const res = await fetch('/api/alterar-senha', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario: 'admin', novaSenha: novaSenha })
+            });
+            const d = await res.json();
+            if(d.success) {
+                alert("✅ Senha alterada com sucesso!");
+                document.getElementById('nova-senha').value = "";
+            }
+        } catch (e) { alert("Erro ao mudar senha."); }
     }
 }
 
-// Inicializa o painel
 document.addEventListener('DOMContentLoaded', carregarPainel);
 </script>
 
