@@ -7,8 +7,6 @@ const app = express();
 // --- CONFIGURAÇÃO SUPABASE ---
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
-const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 // CONFIGURAÇÃO DE CACHE
 app.use((req, res, next) => {
@@ -25,16 +23,20 @@ const upload = multer({ dest: './uploads/' });
 
 // ROTA: LISTAR PRODUTOS (Vindo do Supabase)
 app.get('/api/produtos', async (req, res) => {
-    const { data, error } = await supabase
-        .from('produtos')
-        .select('*')
-        .order('id', { ascending: true });
+    try {
+        const { data, error } = await supabase
+            .from('produtos')
+            .select('*')
+            .order('id', { ascending: true });
 
-    if (error) return res.status(500).json(error);
-    res.json(data);
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// ROTA: ATUALIZAR PRODUTO (Persistente)
+// ROTA: ATUALIZAR PRODUTO 
 app.post('/api/atualizar-produto/:id', upload.single('foto'), async (req, res) => {
     const { id } = req.params;
     const { nome, preco, tamanhos } = req.body;
@@ -49,13 +51,17 @@ app.post('/api/atualizar-produto/:id', upload.single('foto'), async (req, res) =
         updateData.imagem_url = `/uploads/${req.file.filename}`;
     }
 
-    const { data, error } = await supabase
-        .from('produtos')
-        .update(updateData)
-        .eq('id', id);
+    try {
+        const { data, error } = await supabase
+            .from('produtos')
+            .update(updateData)
+            .eq('id', id);
 
-    if (error) return res.status(500).json({ success: false, error });
-    res.json({ success: true });
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 // ROTA: LOGIN
