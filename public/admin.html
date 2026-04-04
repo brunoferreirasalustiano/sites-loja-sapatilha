@@ -116,24 +116,27 @@
 </div>
 
 <script>
-    // 1. TRAVA DE SEGURANÇA 
-    // Verifica se o valor "logadoDePietri" existe no navegador
-    if (localStorage.getItem("logadoDePietri") !== "true") {
-        alert("Acesso negado! Por favor, faça login.");
-        window.location.href = "login.html"; // Manda de volta para o login
-    }
+    // --- 1. TRAVA DE SEGURANÇA E LOGOUT ---
+if (localStorage.getItem("logadoDePietri") !== "true") {
+    alert("Acesso negado! Por favor, faça login.");
+    window.location.href = "login.html";
+}
 
-    // 2. FUNÇÃO PARA SAIR (LOGOUT)
-    function sair() {
-        localStorage.removeItem("logadoDePietri");
-        window.location.href = "login.html";
-    }
+function sair() {
+    localStorage.removeItem("logadoDePietri");
+    window.location.href = "login.html";
+}
 
-    // 3. FUNÇÕES DO PAINEL 
-    async function carregarPainel() {
+// --- 2. FUNÇÃO PARA CARREGAR O PAINEL ---
+async function carregarPainel() {
+    const lista = document.getElementById('lista-admin');
+    if (!lista) return;
+
+    try {
+        // Buscamos os produtos do seu novo Back-end (que lê do Supabase)
         const res = await fetch('/api/produtos?t=' + new Date().getTime());
         const produtos = await res.json();
-        const lista = document.getElementById('lista-admin');
+        
         lista.innerHTML = "";
 
         produtos.forEach(p => {
@@ -147,58 +150,66 @@
                         <label>PREÇO (R$)</label>
                         <input type="number" step="0.01" id="preco-${p.id}" value="${p.preco}">
 
-                        <label>TAMANHOS DISPONÍVEIS (Separe por vírgula)</label>
-                        <input type="text" id="tamanhos-${p.id}" value="${p.tamanhos}" placeholder="Ex: 34,35,36,37">
+                        <label>TAMANHOS DISPONÍVEIS</label>
+                        <input type="text" id="tamanhos-${p.id}" value="${p.tamanhos}">
                         
-                        <label>TROCAR FOTO</label>
+                        <label>TROCAR FOTO (Supabase Storage)</label>
                         <input type="file" id="foto-${p.id}" accept="image/*">
                     </div>
-                    <button class="btn-salvar" id="btn-${p.id}" onclick="salvar(${p.id})">Salvar Alterações</button>
+                    <button class="btn-salvar" id="btn-${p.id}" onclick="salvarAlteracoes(${p.id})">
+                        Salvar no Supabase
+                    </button>
                 </div>
             `;
         });
+    } catch (e) {
+        console.error("Erro ao carregar produtos:", e);
+    }
+}
+
+// --- 3. FUNÇÃO PARA SALVAR (MODO PROFISSIONAL) ---
+async function salvarAlteracoes(id) {
+    const btn = document.getElementById(`btn-${id}`);
+    const originalText = btn.innerText;
+    
+    btn.innerText = "Enviando...";
+    btn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('nome', document.getElementById(`nome-${id}`).value);
+    formData.append('preco', document.getElementById(`preco-${id}`).value);
+    formData.append('tamanhos', document.getElementById(`tamanhos-${id}`).value);
+    
+    const fotoFile = document.getElementById(`foto-${id}`).files[0];
+    if (fotoFile) {
+        formData.append('foto', fotoFile);
     }
 
-    async function salvar(id) {
-        const btn = document.getElementById(`btn-${id}`);
-        const originalText = btn.innerText;
+    try {
+        const res = await fetch(`/api/atualizar-produto/${id}`, {
+            method: 'POST',
+            body: formData
+        });
         
-        btn.innerText = "Salvando...";
-        btn.disabled = true;
-
-        const nome = document.getElementById(`nome-${id}`).value;
-        const preco = document.getElementById(`preco-${id}`).value;
-        const tamanhos = document.getElementById(`tamanhos-${id}`).value;
-        const foto = document.getElementById(`foto-${id}`).files[0];
-
-        const fd = new FormData();
-        fd.append('nome', nome);
-        fd.append('preco', preco);
-        fd.append('tamanhos', tamanhos);
-        if(foto) fd.append('foto', foto);
-
-        try {
-            const res = await fetch(`/api/atualizar-produto/${id}`, {
-                method: 'POST',
-                body: fd
-            });
-
-            if(res.ok) {
-                alert("✅ Atualizado com Sucesso!");
-                document.getElementById(`foto-${id}`).value = "";
-                await carregarPainel(); 
-            }
-        } catch (e) {
-            alert("Erro ao conectar ao servidor.");
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
+        const d = await res.json();
+        
+        if (d.success) {
+            alert("✅ Sucesso! Dados e Foto salvos no Supabase.");
+            // Pequeno delay para o Supabase processar a imagem antes de recarregar
+            setTimeout(() => location.reload(), 500);
+        } else {
+            alert("❌ Erro: " + d.error);
         }
+    } catch (e) {
+        alert("Erro de conexão com o servidor.");
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
     }
-    
+}
 
-    
-    carregarPainel();
+// Inicializa o painel
+document.addEventListener('DOMContentLoaded', carregarPainel);
 </script>
 
 
