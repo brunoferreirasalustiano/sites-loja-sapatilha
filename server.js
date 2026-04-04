@@ -4,11 +4,14 @@ const multer = require('multer');
 const path = require('path');
 const app = express();
 
-// --- CONFIGURAÇÃO SUPABASE ---
+// 1. Pegar as chaves do Ambiente do Render
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
-// CONFIGURAÇÃO DE CACHE
+// 2. CRIA O CLIENTE 
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// 3. Configurações de Cache e Pastas
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     next();
@@ -21,7 +24,7 @@ app.use('/imagens-sapatilhas', express.static(path.join(__dirname, 'public/image
 
 const upload = multer({ dest: './uploads/' });
 
-// ROTA: LISTAR PRODUTOS (Vindo do Supabase)
+// 4. ROTA DE PRODUTOS
 app.get('/api/produtos', async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -30,33 +33,25 @@ app.get('/api/produtos', async (req, res) => {
             .order('id', { ascending: true });
 
         if (error) throw error;
-        res.json(data);
+        res.json(data || []);
     } catch (error) {
+        console.error("Erro Supabase:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
 
-// ROTA: ATUALIZAR PRODUTO 
+// 5. ROTA DE ATUALIZAR
 app.post('/api/atualizar-produto/:id', upload.single('foto'), async (req, res) => {
     const { id } = req.params;
     const { nome, preco, tamanhos } = req.body;
-
-    let updateData = { 
-        nome, 
-        preco: parseFloat(preco), 
-        tamanhos 
-    };
+    let updateData = { nome, preco: parseFloat(preco), tamanhos };
 
     if (req.file) {
         updateData.imagem_url = `/uploads/${req.file.filename}`;
     }
 
     try {
-        const { data, error } = await supabase
-            .from('produtos')
-            .update(updateData)
-            .eq('id', id);
-
+        const { error } = await supabase.from('produtos').update(updateData).eq('id', id);
         if (error) throw error;
         res.json({ success: true });
     } catch (error) {
@@ -64,15 +59,15 @@ app.post('/api/atualizar-produto/:id', upload.single('foto'), async (req, res) =
     }
 });
 
-// ROTA: LOGIN
+// 6. LOGIN
 app.post('/api/login', (req, res) => {
     const { usuario, senha } = req.body;
     if (usuario === 'admin' && senha === '1234') {
         res.json({ success: true });
     } else {
-        res.status(401).json({ success: false, message: "Usuário ou senha inválidos" });
+        res.status(401).json({ success: false, message: "Acesso negado" });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🔥 Servidor Profissional rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`🔥 Servidor rodando na porta ${PORT}`));
