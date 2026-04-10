@@ -1,6 +1,6 @@
 # 👠 De Pietri - Loja de Sapatilhas
 
-> **🌐 Site Oficial:** [Acesse a De Pietri aqui]([https://depietrisapatilhas.onrender.com/index.html])
+> **🌐 Site Oficial:** [Acesse a De Pietri aqui](https://depietrisapatilhas.onrender.com/index.html)
 
 ---
 
